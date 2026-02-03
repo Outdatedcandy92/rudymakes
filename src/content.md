@@ -11,7 +11,7 @@ Hi there! I'm Rudraksh. I go by Rudy or Outdatedcandy92 online. I'm a 17 year ol
 I’ve done some cool stuff like:
 - Organized a [Hackathon](https://daydream.hackclub.com/toronto) @ Shopify Toronto for teenagers
 - Ran my own [online programs](https://picoducky.hackclub.com/) in Hack Club
-- Got one of my projects features on a hardware magazine cover
+- Got one of my projects features on a [hardware magazine cover](https://cdn.2008000.xyz/cdn/03-02-2026%2F243c8b13_image.png)
 
 
 I'm currently working on:
