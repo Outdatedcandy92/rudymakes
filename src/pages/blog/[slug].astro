@@ -1,0 +1,131 @@
+---
+import '../../styles/global.css';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const blogs = await getCollection('blog');
+  return blogs.map((blog) => ({
+    params: { slug: blog.id },
+    props: { blog },
+  }));
+}
+
+interface Props {
+  blog: any;
+}
+
+const { blog } = Astro.props as Props;
+const { Content } = await render(blog);
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{blog.data.title} - Rudy's Website</title>
+	</head>
+	<body>
+		<nav class="navbar">
+			<div class="nav-links">
+				<a href="/">home</a>
+				<a href="/projects">projects</a>
+				<a href="/blog">blog</a>
+			</div>
+		</nav>
+
+		<main class="container">
+			<a href="/blog" class="back-link">← Back to Blog</a>
+			<h1>{blog.data.title}</h1>
+			<article class="blog-content">
+				<Content />
+			</article>
+		</main>
+	</body>
+</html>
+
+<style>
+.back-link {
+  color: #535353;
+  text-decoration: none;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  display: inline-block;
+  transition: color 0.3s ease;
+}
+
+.back-link:hover {
+  color: #333;
+  text-decoration: underline;
+}
+
+.blog-content {
+  margin-top: 2rem;
+  line-height: 1.6;
+}
+
+:global(.blog-content h1) {
+  display: none;
+}
+
+:global(.blog-content h2),
+:global(.blog-content h3) {
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+:global(.blog-content p) {
+  margin-bottom: 1rem;
+}
+
+:global(.blog-content code) {
+  background-color: #f0f0f0;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+  color: #d63384;
+}
+
+:global(.blog-content pre) {
+  background-color: #2d2d2d !important;
+  color: #f8f8f2;
+  padding: 1rem;
+  border-radius: 5px;
+  overflow-x: auto;
+  margin: 1rem 0;
+  line-height: 1.5;
+  font-size: 0.9rem;
+}
+
+:global(.blog-content pre *),
+:global(.blog-content code) {
+  background-color: #2d2d2d !important;
+  color: #f8f8f2 !important;
+}
+
+:global(.blog-content pre code) {
+  padding: 0;
+  border-radius: 0;
+}
+
+:global(.blog-content hr) {
+  border: none !important;
+  border-top: 2px solid #535353 !important;
+  margin: 2rem 0 !important;
+  background: none !important;
+  height: auto !important;
+}
+
+:global(.blog-content img) {
+  max-width: 100% !important;
+  width: auto !important;
+  height: auto !important;
+  border-radius: 5px;
+  margin: 1.5rem 0;
+  display: block;
+  object-fit: contain;
+}
+</style>
