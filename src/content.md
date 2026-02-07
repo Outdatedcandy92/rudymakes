@@ -12,6 +12,7 @@ I’ve done some cool stuff like:
 - Organized a [Hackathon](https://daydream.hackclub.com/toronto) @ Shopify Toronto for teenagers
 - Ran my own [online programs](https://picoducky.hackclub.com/) in Hack Club
 - Got one of my projects features on a [hardware magazine cover](https://cdn.2008000.xyz/cdn/03-02-2026%2F243c8b13_image.png)
+- Mentored at [Hardware Hack Days](https://cdn.2008000.xyz/cdn/07-02-2026%2Fb97ab677_image.png) PCB workshop @ UofT and UW
 
 
 I'm currently working on:
