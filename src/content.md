@@ -25,6 +25,6 @@ I'm currently working on:
 
 Want to get in touch? email me at **rudy[at]rudymakes.com** :D
 
-You can find me on [github](https://github.com/Outdatedcandy92?tab=repositories) ~ [linkedin](https://www.linkedin.com/in/rudraksh-payaal-004011386/) 
+You can find me on [github](https://github.com/Outdatedcandy92) ~ [linkedin](https://www.linkedin.com/in/rudraksh-payaal-004011386/) 
 
 ---
