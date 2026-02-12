@@ -1,3 +1,13 @@
+@font-face {
+  font-family: "Departure Mono";
+  src: 
+    url("/fonts/DepartureMono.woff2") format("woff2"),
+    url("/fonts/DepartureMono.woff") format("woff");
+  font-display: swap;
+}
+
+
+
 * {
     background-color: #FFFFEB;
     font-family: 'Departure Mono';
