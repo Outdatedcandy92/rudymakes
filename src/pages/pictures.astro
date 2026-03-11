@@ -1,0 +1,349 @@
+---
+import '../styles/global.css';
+import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { extname } from 'node:path';
+import exifr from 'exifr';
+import sharp from 'sharp';
+
+const imageExtensions = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif']);
+const picturesDirectory = new URL('../../public/pictures/', import.meta.url);
+const thumbnailsDirectory = new URL('../../public/pictures/.thumbs/', import.meta.url);
+
+function formatNumber(value: number) {
+	return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(/\.0$/, '');
+}
+
+function formatShutterSpeed(value: number | null | undefined) {
+	if (!value || value <= 0) {
+		return 'NA';
+	}
+
+	if (value >= 1) {
+		return `${formatNumber(value)}s`;
+	}
+
+	return `1/${Math.round(1 / value)}s`;
+}
+
+function formatMetadata(value: number | null | undefined, formatter: (input: number) => string) {
+	return typeof value === 'number' && Number.isFinite(value) ? formatter(value) : 'NA';
+}
+
+function formatCameraName(make: unknown, model: unknown) {
+	const normalizedMake = typeof make === 'string' ? make.trim() : '';
+	const normalizedModel = typeof model === 'string' ? model.trim() : '';
+
+	if (!normalizedMake && !normalizedModel) {
+		return 'NA';
+	}
+
+	if (!normalizedMake) {
+		return normalizedModel;
+	}
+
+	if (!normalizedModel) {
+		return normalizedMake;
+	}
+
+	if (normalizedModel.toLowerCase().startsWith(normalizedMake.toLowerCase())) {
+		return normalizedModel;
+	}
+
+	return `${normalizedMake} ${normalizedModel}`;
+}
+
+function getFallbackMetadata() {
+	return {
+		focalLength: 'NA',
+		aperture: 'NA',
+		shutter: 'NA',
+		iso: 'NA',
+		camera: 'NA',
+	};
+}
+
+function getPriorityValue(fileName: string) {
+	const priorityMatch = fileName.match(/^(\d+)-/);
+
+	if (!priorityMatch) {
+		return Number.POSITIVE_INFINITY;
+	}
+
+	const parsedPriority = Number.parseInt(priorityMatch[1], 10);
+	return Number.isFinite(parsedPriority) ? parsedPriority : Number.POSITIVE_INFINITY;
+}
+
+function sortPictureFiles(left: string, right: string) {
+	const leftPriority = getPriorityValue(left);
+	const rightPriority = getPriorityValue(right);
+
+	if (leftPriority !== rightPriority) {
+		return leftPriority - rightPriority;
+	}
+
+	return left.localeCompare(right, undefined, { numeric: true });
+}
+
+function getThumbnailName(fileName: string) {
+	const extension = extname(fileName);
+	const baseName = extension ? fileName.slice(0, -extension.length) : fileName;
+	return `${baseName}.webp`;
+}
+
+async function ensureThumbnail(fileName: string) {
+	const sourceFileUrl = new URL(`../../public/pictures/${fileName}`, import.meta.url);
+	const thumbnailName = getThumbnailName(fileName);
+	const thumbnailFileUrl = new URL(`../../public/pictures/.thumbs/${thumbnailName}`, import.meta.url);
+
+	const sourceStats = await stat(sourceFileUrl);
+	let shouldRegenerate = true;
+
+	try {
+		const thumbnailStats = await stat(thumbnailFileUrl);
+		shouldRegenerate = thumbnailStats.mtimeMs < sourceStats.mtimeMs;
+	} catch {
+		shouldRegenerate = true;
+	}
+
+	if (shouldRegenerate) {
+		const sourceBuffer = await readFile(sourceFileUrl);
+		const optimizedPreview = await sharp(sourceBuffer)
+			.rotate()
+			.resize({
+				width: 540,
+				height: 540,
+				fit: 'inside',
+				withoutEnlargement: true,
+			})
+			.webp({
+				quality: 72,
+				effort: 4,
+			})
+			.toBuffer();
+
+		await writeFile(thumbnailFileUrl, new Uint8Array(optimizedPreview));
+	}
+
+	return {
+		fullSrc: `/pictures/${fileName}`,
+		thumbnailSrc: `/pictures/.thumbs/${thumbnailName}`,
+		sourceFileUrl,
+	};
+}
+
+let pictures: Array<{
+	name: string;
+	src: string;
+	previewSrc: string;
+	alt: string;
+	metadata: {
+		focalLength: string;
+		aperture: string;
+		shutter: string;
+		iso: string;
+		camera: string;
+	};
+}> = [];
+
+try {
+	await mkdir(thumbnailsDirectory, { recursive: true });
+
+	const entries = await readdir(picturesDirectory, { withFileTypes: true });
+	const files = entries
+		.filter((entry) => entry.isFile() && imageExtensions.has(extname(entry.name).toLowerCase()))
+		.map((entry) => entry.name)
+		.sort(sortPictureFiles);
+
+	pictures = await Promise.all(
+		files.map(async (fileName) => {
+			let metadata = getFallbackMetadata();
+			const preview = await ensureThumbnail(fileName);
+
+			try {
+				const fileBuffer = await readFile(preview.sourceFileUrl);
+				const exif = await exifr.parse(fileBuffer, {
+					pick: ['FocalLength', 'FNumber', 'ExposureTime', 'ISO', 'PhotographicSensitivity', 'Make', 'Model'],
+				});
+
+				metadata = {
+					focalLength: formatMetadata(exif?.FocalLength, (value) => `${formatNumber(value)}mm`),
+					aperture: formatMetadata(exif?.FNumber, (value) => `f/${formatNumber(value)}`),
+					shutter: formatShutterSpeed(exif?.ExposureTime),
+					iso: formatMetadata(exif?.ISO ?? exif?.PhotographicSensitivity, (value) => String(Math.round(value))),
+					camera: formatCameraName(exif?.Make, exif?.Model),
+				};
+			} catch {
+				metadata = getFallbackMetadata();
+			}
+
+			return {
+				name: fileName,
+				src: preview.fullSrc,
+				previewSrc: preview.thumbnailSrc,
+				alt: fileName.replace(/[-_]+/g, ' ').replace(/\.[^.]+$/, ''),
+				metadata,
+			};
+		})
+	);
+} catch {
+	pictures = [];
+}
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Pictures - Rudy's Website</title>
+	</head>
+	<body>
+		<nav class="navbar">
+			<div class="nav-links">
+				<a href="/">home</a>
+				<a href="/projects">projects</a>
+				<a href="/blog">blog</a>
+				<a href="/pictures">pictures</a>
+			</div>
+		</nav>
+
+		<main class="container pictures-container">
+			<h1>Pictures</h1>
+			<hr>
+			<p class="pictures-intro">A collection of tuff pictures.</p>
+
+			{pictures.length > 0 ? (
+				<div class="pictures-grid">
+					{pictures.map((picture) => (
+						<figure class="picture-card">
+							<button
+								type="button"
+								class="picture-trigger"
+								data-picture-src={picture.src}
+								data-picture-alt={picture.alt}
+								data-focal-length={picture.metadata.focalLength}
+								data-aperture={picture.metadata.aperture}
+								data-shutter={picture.metadata.shutter}
+								data-iso={picture.metadata.iso}
+								data-camera={picture.metadata.camera}
+								aria-label={`Open ${picture.alt}`}
+							>
+								<img src={picture.previewSrc} alt={picture.alt} loading="lazy" decoding="async" />
+							</button>
+						</figure>
+					))}
+				</div>
+			) : (
+				<p class="pictures-empty">Add image files to public/pictures and they will appear here automatically.</p>
+			)}
+
+			<dialog class="picture-modal" data-picture-dialog>
+				<div class="picture-modal__content">
+					<form method="dialog" class="picture-modal__close-row">
+						<button type="submit" class="picture-modal__close" aria-label="Close picture viewer">Close</button>
+					</form>
+					<div class="picture-modal__loading" data-modal-loading>Loading full image...</div>
+					<img class="picture-modal__image picture-modal__image--hidden" src="" alt="" data-modal-image />
+					<div class="picture-modal__meta">
+						<h2>Camera Settings</h2>
+						<div class="picture-modal__meta-grid">
+							<p><strong>Focal Length:</strong> <span data-meta-focal-length>NA</span></p>
+							<p><strong>Aperture:</strong> <span data-meta-aperture>NA</span></p>
+							<p><strong>Shutter:</strong> <span data-meta-shutter>NA</span></p>
+							<p><strong>ISO:</strong> <span data-meta-iso>NA</span></p>
+							<p><strong>Camera:</strong> <span data-meta-camera>NA</span></p>
+						</div>
+					</div>
+				</div>
+			</dialog>
+		</main>
+
+		<script>
+			const dialog = document.querySelector('[data-picture-dialog]');
+			const modalImage = document.querySelector('[data-modal-image]');
+			const focalLengthField = document.querySelector('[data-meta-focal-length]');
+			const apertureField = document.querySelector('[data-meta-aperture]');
+			const shutterField = document.querySelector('[data-meta-shutter]');
+			const isoField = document.querySelector('[data-meta-iso]');
+			const cameraField = document.querySelector('[data-meta-camera]');
+			const loadingIndicator = document.querySelector('[data-modal-loading]');
+
+			let activeLoadRequest = 0;
+
+			if (dialog instanceof HTMLDialogElement && modalImage instanceof HTMLImageElement) {
+				const triggers = document.querySelectorAll('.picture-trigger');
+
+				for (const trigger of triggers) {
+					trigger.addEventListener('click', () => {
+						const button = trigger instanceof HTMLButtonElement ? trigger : null;
+
+						if (!button) {
+							return;
+						}
+
+						const source = button.dataset.pictureSrc ?? '';
+						const alt = button.dataset.pictureAlt ?? '';
+						activeLoadRequest += 1;
+						const loadRequestId = activeLoadRequest;
+
+						modalImage.classList.add('picture-modal__image--hidden');
+						modalImage.removeAttribute('src');
+						modalImage.alt = '';
+						if (loadingIndicator) loadingIndicator.removeAttribute('hidden');
+
+						if (focalLengthField) focalLengthField.textContent = button.dataset.focalLength ?? 'NA';
+						if (apertureField) apertureField.textContent = button.dataset.aperture ?? 'NA';
+						if (shutterField) shutterField.textContent = button.dataset.shutter ?? 'NA';
+						if (isoField) isoField.textContent = button.dataset.iso ?? 'NA';
+						if (cameraField) cameraField.textContent = button.dataset.camera ?? 'NA';
+
+						if (!dialog.open) {
+							dialog.showModal();
+						}
+
+						const fullImage = new Image();
+						fullImage.decoding = 'async';
+						fullImage.onload = () => {
+							if (loadRequestId !== activeLoadRequest) {
+								return;
+							}
+
+							modalImage.src = source;
+							modalImage.alt = alt;
+							modalImage.classList.remove('picture-modal__image--hidden');
+							if (loadingIndicator) loadingIndicator.setAttribute('hidden', 'hidden');
+						};
+
+						fullImage.onerror = () => {
+							if (loadRequestId !== activeLoadRequest) {
+								return;
+							}
+
+							if (loadingIndicator) loadingIndicator.setAttribute('hidden', 'hidden');
+						};
+
+						fullImage.src = source;
+					});
+				}
+
+				dialog.addEventListener('click', (event) => {
+					const target = event.target;
+
+					if (target === dialog) {
+						dialog.close();
+					}
+				});
+
+				dialog.addEventListener('close', () => {
+					activeLoadRequest += 1;
+					modalImage.classList.add('picture-modal__image--hidden');
+					modalImage.removeAttribute('src');
+					modalImage.alt = '';
+					if (loadingIndicator) loadingIndicator.setAttribute('hidden', 'hidden');
+				});
+			}
+		</script>
+	</body>
+</html>
