@@ -1,8 +1,8 @@
 @font-face {
   font-family: "Departure Mono";
   src:
-        url("/DepartureMono.woff2") format("woff2"),
-        url("/DepartureMono.woff") format("woff");
+                url("../assets/fonts/DepartureMono.woff2?v=20260311") format("woff2"),
+                url("../assets/fonts/DepartureMono.woff?v=20260311") format("woff");
   font-style: normal;
   font-weight: 400;
   font-display: swap;
