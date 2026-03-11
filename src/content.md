@@ -1,4 +1,4 @@
-# Rudraksh Payaal // Rudy
+# Rudraksh // Rudy
 ### Student / Hardware Nerd 
 ### 📍 Toronto, ON, Canada
 

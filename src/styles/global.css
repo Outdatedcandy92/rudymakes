@@ -1,6 +1,6 @@
 * {
-    background-color: #FFFFEB;
-    font-family: 'Departure Mono';
+    background-color: #f4ecd8;
+    font-family: 'Source Code Pro', monospace;
     color: #535353;
     margin: 0;
     padding: 0;
@@ -21,6 +21,7 @@
 }
 
 .nav-links a {
+    font-family: 'Departure Mono';
     text-decoration: none;
     color: #535353;
     font-weight: 600;
@@ -41,11 +42,13 @@
 
 /* Typography */
 h1 {
+    font-family: 'Departure Mono';
     font-size: 2.5rem;
     color: #535353;
 }
 
 h2 {
+    font-family: 'Departure Mono';
     margin-top: 1rem;
     margin-bottom: 1rem;
     font-size: 1.8rem;
