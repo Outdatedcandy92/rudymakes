@@ -16,6 +16,13 @@ interface Props {
 
 const { blog } = Astro.props as Props;
 const { Content } = await render(blog);
+const publishedDate = blog.data.pubDate
+  ? new Date(blog.data.pubDate).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+  : null;
 ---
 
 <html lang="en">
@@ -31,7 +38,6 @@ const { Content } = await render(blog);
 		<nav class="navbar">
 			<div class="nav-links">
 				<a href="/">home</a>
-				<a href="/projects">projects</a>
 				<a href="/blog">blog</a>
         <a href="/pictures">pictures</a>
 			</div>
@@ -40,6 +46,8 @@ const { Content } = await render(blog);
 		<main class="container">
 			<a href="/blog" class="back-link">← Back to Blog</a>
 			<h1>{blog.data.title}</h1>
+      {publishedDate && <p class="pub-date">{publishedDate}</p>}
+      <hr class="post-divider" />
 			<article class="blog-content">
 				<Content />
 			</article>
@@ -63,8 +71,21 @@ const { Content } = await render(blog);
 }
 
 .blog-content {
-  margin-top: 2rem;
+  margin-top: 1.5rem;
   line-height: 1.6;
+}
+
+.pub-date {
+  margin: 1rem 0 0;
+  color: #535353;
+  font-size: 1rem;
+
+}
+
+.post-divider {
+  border: none;
+  border-top: 1px solid #535353;
+  margin: 1rem 0 0;
 }
 
 :global(.blog-content h1) {
@@ -74,7 +95,7 @@ const { Content } = await render(blog);
 :global(.blog-content h2),
 :global(.blog-content h3) {
   margin-top: 1.5rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.8rem;
 }
 
 :global(.blog-content p) {
