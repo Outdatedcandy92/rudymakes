@@ -56,6 +56,54 @@ const publishedDate = blog.data.pubDate
 </html>
 
 <style>
+@font-face {
+  font-family: 'Palatino Linotype Custom';
+  src: url('/palatinolinotype_roman.woff') format('woff');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Palatino Linotype Custom';
+  src: url('/palatinolinotype_roman.woff') format('woff');
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Palatino Linotype Custom';
+  src: url('/palatinolinotype_roman.woff') format('woff');
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Palatino Linotype Custom';
+  src: url('/palatinolinotype_italic.woff') format('woff');
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Palatino Linotype Custom';
+  src: url('/palatinolinotype_bold.woff') format('woff');
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Palatino Linotype Custom';
+  src: url('/palatinolinotype_bolditalic.woff') format('woff');
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+}
+
 .back-link {
   color: #535353;
   text-decoration: none;
@@ -73,6 +121,12 @@ const publishedDate = blog.data.pubDate
 .blog-content {
   margin-top: 1.5rem;
   line-height: 1.6;
+}
+
+:global(.blog-content *:not(h1):not(h2):not(pre):not(code)) {
+  font-family: 'Palatino Linotype Custom';
+  font-weight: 500;
+  font-size: 13pt;
 }
 
 .pub-date {
@@ -120,12 +174,14 @@ const publishedDate = blog.data.pubDate
   margin: 1rem 0;
   line-height: 1.5;
   font-size: 0.9rem;
+  font-family: 'Courier New', monospace;
 }
 
 :global(.blog-content pre *),
 :global(.blog-content code) {
   background-color: #2d2d2d !important;
   color: #f8f8f2 !important;
+  font-family: 'Courier New', monospace;
 }
 
 :global(.blog-content pre code) {
