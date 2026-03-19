@@ -1,0 +1,475 @@
+---
+import '../../styles/global.css';
+import { getCollection, render } from 'astro:content';
+import {
+  getBlogDisplayTitle,
+  getBlogRouteSegments,
+  getBlogSeriesNavigation,
+} from '../../utils/blogPageFormat';
+
+export async function getStaticPaths() {
+  const blogs = await getCollection('blog');
+
+  return blogs.map((blog) => ({
+    params: { slug: getBlogRouteSegments(blog.id).join('/') },
+    props: {
+      blog,
+      navigation: getBlogSeriesNavigation(blog, blogs),
+      pageTitle: getBlogDisplayTitle(blog),
+    },
+  }));
+}
+
+interface Props {
+  blog: any;
+  navigation: {
+    previous?: { href: string; title: string };
+    next?: { href: string; title: string };
+  } | null;
+  pageTitle: string;
+}
+
+const { blog, navigation, pageTitle } = Astro.props as Props;
+const { Content } = await render(blog);
+const publishedDate = blog.data.pubDate
+  ? new Date(blog.data.pubDate).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+  : null;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{pageTitle} - Rudy's Website</title>
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="nav-links">
+        <a href="/">home</a>
+        <a href="/blog">blog</a>
+        <a href="/pictures">pictures</a>
+      </div>
+    </nav>
+
+    <main class="container">
+      <a href="/blog" class="back-link">← Back to Blog</a>
+      <h1>{pageTitle}</h1>
+      {publishedDate && <p class="pub-date">{publishedDate}</p>}
+      {navigation && (navigation.previous || navigation.next) && (
+        <nav class="page-navigation-top" aria-label="Page navigation">
+          {navigation.previous ? (
+            <a class="page-nav-link" href={navigation.previous.href}>← Previous: {navigation.previous.title}</a>
+          ) : (
+            <span />
+          )}
+          {navigation.next ? (
+            <a class="page-nav-link page-nav-next" href={navigation.next.href}>Next: {navigation.next.title} →</a>
+          ) : (
+            <span />
+          )}
+        </nav>
+      )}
+      <hr class="post-divider" />
+      <article class="blog-content">
+        <Content />
+      </article>
+
+      {navigation && (navigation.previous || navigation.next) && (
+        <nav class="page-navigation" aria-label="Page navigation">
+          {navigation.previous ? (
+            <a class="page-nav-link" href={navigation.previous.href}>← Previous: {navigation.previous.title}</a>
+          ) : (
+            <span />
+          )}
+
+          {navigation.next ? (
+            <a class="page-nav-link page-nav-next" href={navigation.next.href}>Next: {navigation.next.title} →</a>
+          ) : (
+            <span />
+          )}
+        </nav>
+      )}
+    </main>
+
+    <aside class="outline-sidebar" aria-label="Page outline">
+      <div class="outline-title">On this page</div>
+      <nav id="outline-nav" class="outline-nav" aria-label="Section navigation"></nav>
+    </aside>
+
+    <script type="module">
+      const contentRoot = document.querySelector('.blog-content');
+      const outlineNav = document.querySelector('#outline-nav');
+
+      if (contentRoot && outlineNav) {
+        const headings = Array.from(contentRoot.querySelectorAll('h2, h3, h4'));
+
+        const normalizeId = (text, fallback) => {
+          const normalized = text
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .trim()
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-');
+          return normalized || fallback;
+        };
+
+        headings.forEach((heading, index) => {
+          if (!heading.id) {
+            heading.id = normalizeId(heading.textContent || '', `section-${index + 1}`);
+          }
+        });
+
+        const listRoot = document.createElement('ul');
+        listRoot.className = 'outline-list';
+        outlineNav.appendChild(listRoot);
+
+        const stack = [{ level: 1, list: listRoot, item: null }];
+
+        headings.forEach((heading) => {
+          const level = Number(heading.tagName.slice(1));
+
+          while (stack.length && level <= stack[stack.length - 1].level) {
+            stack.pop();
+          }
+
+          const parent = stack[stack.length - 1];
+          const item = document.createElement('li');
+          item.className = `outline-item level-${level}`;
+
+          const link = document.createElement('a');
+          link.href = `#${heading.id}`;
+          link.className = 'outline-link';
+          link.textContent = heading.textContent || heading.id;
+          item.appendChild(link);
+
+          parent.list.appendChild(item);
+
+          const childList = document.createElement('ul');
+          childList.className = 'outline-list';
+          item.appendChild(childList);
+
+          stack.push({ level, list: childList, item });
+        });
+
+        const links = Array.from(outlineNav.querySelectorAll('.outline-link'));
+        const headingById = new Map(headings.map((heading) => [heading.id, heading]));
+
+        const setActive = (id) => {
+          links.forEach((link) => {
+            const active = link.getAttribute('href') === `#${id}`;
+            link.classList.toggle('active', active);
+          });
+        };
+
+        if (headings.length) {
+          setActive(headings[0].id);
+        }
+
+        const observer = new IntersectionObserver(
+          (entries) => {
+            const visible = entries
+              .filter((entry) => entry.isIntersecting)
+              .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+
+            if (visible.length > 0) {
+              setActive(visible[0].target.id);
+              return;
+            }
+
+            const past = headings
+              .filter((heading) => heading.getBoundingClientRect().top <= 120)
+              .at(-1);
+
+            if (past) {
+              setActive(past.id);
+            }
+          },
+          {
+            root: null,
+            rootMargin: '-100px 0px -60% 0px',
+            threshold: [0, 1],
+          }
+        );
+
+        headings.forEach((heading) => observer.observe(heading));
+
+        links.forEach((link) => {
+          link.addEventListener('click', () => {
+            const id = link.getAttribute('href')?.slice(1);
+            if (id && headingById.has(id)) {
+              setActive(id);
+            }
+          });
+        });
+      }
+    </script>
+  </body>
+</html>
+
+<style>
+@font-face {
+  font-family: 'Palatino Linotype Custom';
+  src: url('/palatinolinotype_roman.woff') format('woff');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Palatino Linotype Custom';
+  src: url('/palatinolinotype_roman.woff') format('woff');
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Palatino Linotype Custom';
+  src: url('/palatinolinotype_roman.woff') format('woff');
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Palatino Linotype Custom';
+  src: url('/palatinolinotype_italic.woff') format('woff');
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Palatino Linotype Custom';
+  src: url('/palatinolinotype_bold.woff') format('woff');
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Palatino Linotype Custom';
+  src: url('/palatinolinotype_bolditalic.woff') format('woff');
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+}
+
+.back-link {
+  color: #535353;
+  text-decoration: none;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  display: inline-block;
+  transition: color 0.3s ease;
+}
+
+.back-link:hover {
+  color: #333;
+  text-decoration: underline;
+}
+
+.blog-content {
+  margin-top: 1.5rem;
+  line-height: 1.6;
+}
+
+:global(.blog-content *:not(h1):not(h2):not(h3):not(pre):not(code):not(h4)) {
+  font-family: 'Palatino Linotype Custom';
+  font-weight: 400;
+  font-size: 14pt;
+}
+
+.pub-date {
+  margin: 1rem 0 0;
+  color: #535353;
+  font-size: 1rem;
+}
+
+.post-divider {
+  border: none;
+  border-top: 1px solid #535353;
+  margin: 1rem 0 0;
+}
+
+:global(.blog-content h1) {
+  display: none;
+}
+
+:global(.blog-content h2),
+:global(.blog-content h3) {
+  margin-top: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.8rem;
+  font-family: 'Palatino Linotype Custom';
+}
+
+:global(.blog-content h4) {
+  margin-top: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.8rem;
+  font-size: 14pt;
+  font-family: 'Palatino Linotype Custom';
+}
+
+:global(.blog-content p) {
+  margin-bottom: 1rem;
+}
+
+:global(.blog-content code) {
+  background-color: #f0f0f0;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+  color: #d63384;
+}
+
+:global(.blog-content pre) {
+  background-color: #f1deb1 !important;
+  color: #f8f8f2;
+  padding: 1rem;
+  border-radius: 5px;
+  overflow-x: auto;
+  margin: 1rem 0;
+  line-height: 1.5;
+  font-size: 0.9rem;
+  font-family: 'Courier New', monospace;
+}
+
+:global(.blog-content pre *),
+:global(.blog-content code) {
+  background-color: #f1deb1 !important;
+  color: #000000 !important;
+  font-family: 'Courier New', monospace;
+}
+
+:global(.blog-content pre code) {
+  padding: 0;
+  border-radius: 0;
+}
+
+:global(.blog-content hr) {
+  border: none !important;
+  border-top: 2px solid #535353 !important;
+  margin: 2rem 0 !important;
+  background: none !important;
+  height: auto !important;
+}
+
+:global(.blog-content img) {
+  max-width: 100% !important;
+  width: auto !important;
+  height: auto !important;
+  border-radius: 5px;
+  margin: 1.5rem 0;
+  display: block;
+  object-fit: contain;
+}
+
+.page-navigation {
+  margin-top: 2.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #535353;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.page-navigation-top {
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+}
+
+.page-nav-link {
+  color: #535353;
+  text-decoration: none;
+}
+
+.page-nav-link:hover {
+  text-decoration: underline;
+}
+
+.page-nav-next {
+  text-align: right;
+  margin-left: auto;
+}
+
+.outline-sidebar {
+  position: fixed;
+  top: 15rem;
+  right: 2rem;
+  width: 280px;
+  max-height: calc(100vh - 8rem);
+  overflow-y: auto;
+  padding: 0.75rem 0.5rem 0.75rem 1rem;
+}
+
+.outline-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #535353;
+  margin-bottom: 0.5rem;
+}
+
+.outline-nav {
+  font-size: 0.9rem;
+}
+
+.outline-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.outline-item {
+  margin: 0;
+  padding: 0;
+}
+
+.outline-item .outline-list {
+  margin-left: 1rem;
+}
+
+.outline-link {
+  display: block;
+  color: #6a6a6a;
+  text-decoration: none;
+  padding: 0.2rem 0;
+  line-height: 1.35;
+}
+
+.outline-link:hover {
+  color: #333;
+  text-decoration: underline;
+}
+
+.outline-link.active {
+  color: #222;
+  font-weight: 700;
+}
+
+@media (min-width: 1280px) {
+  .container {
+    max-width: min(820px, calc(100vw - 380px));
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+@media (max-width: 1279px) {
+  .outline-sidebar {
+    display: none;
+  }
+}
+</style>

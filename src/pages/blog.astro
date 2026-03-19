@@ -1,8 +1,14 @@
 ---
 import '../styles/global.css';
 import { getCollection } from 'astro:content';
+import {
+	getBlogDisplayTitle,
+	getBlogRoutePath,
+	isPrimaryBlogListEntry,
+} from '../utils/blogPageFormat';
 
 const blogs = await getCollection('blog');
+const blogList = blogs.filter(isPrimaryBlogListEntry);
 ---
 
 <html lang="en">
@@ -27,8 +33,8 @@ const blogs = await getCollection('blog');
         <h1>Blog</h1>
         <hr>
         <ul class="blog-posts">
-            {blogs.map(blog => (
-                <li><a href={`/blog/${blog.id}`}>{blog.data.title}</a></li>
+			{blogList.map(blog => (
+				<li><a href={getBlogRoutePath(blog.id)}>{getBlogDisplayTitle(blog)}</a></li>
             ))}
         </ul>
         </main>

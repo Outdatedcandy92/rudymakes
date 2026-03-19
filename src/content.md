@@ -8,17 +8,22 @@
 
 Hi there! I'm Rudy. I'm a 17 year old maker from toronto who love to make PCBs and hack hardware.
 
-I’ve done some cool stuff like:
-- Organized a [Hackathon](https://daydream.hackclub.com/toronto) @ Shopify Toronto for teenagers
-- Ran my own online programs in Hack Club
-- Got one of my projects features on a [hardware magazine cover](https://cdn.2008000.xyz/cdn/03-02-2026%2F243c8b13_image.png)
-- Mentored at [Hardware Hack Days](https://cdn.2008000.xyz/cdn/07-02-2026%2Fb97ab677_image.png) PCB workshop @ UofT and UW
+Some cool stuff that I've done are:
+- Organized <a href="/attachments/home/Hackathons.webp" target="_blank" rel="noopener noreferrer">Hackathons</a> in Toronto for teenagers :D
+- Mentored at <a href="/attachments/home/Hardware%20Hack%20Days.webp" target="_blank" rel="noopener noreferrer">Hardware Hack Days</a> PCB workshop @ UofT and UW
+- Got one of my project featured on a <a href="/attachments/home/Magazine.webp" target="_blank" rel="noopener noreferrer">hardware magazine cover</a>(twice)
+- Ran and currently [running](https://resolution.hackclub.com/ref/hardware) cool online programs in [Hack Club](https://hackclub.com/)
+- Designed a sick cover for my school's annual yearbook
 
-
-I'm currently working on:
-- [Allwinner V3S SBC](https://github.com/Outdatedcandy92/V3S-SBC)
+I'm current working on:
+- [Allwinner V3s Based SBC](https://github.com/Outdatedcandy92/V3S-SBC)
 - [Audio Development Board](https://github.com/Outdatedcandy92/Audio-Devboard)
+- [RP2040 Debug Probe](https://github.com/Outdatedcandy92/RP2040-DBUG-Probe)
+- [Writing Hardware Guides](https://github.com/Outdatedcandy92/Resolution-Hardware-Guides)
+- Organizing another hackathon!
 
+I just finished making:
+- [USB Hub Guide](https://github.com/Outdatedcandy92/USB-Hub-Guide)
 
 
 

@@ -78,6 +78,11 @@ p {
     line-height: 1.6;
 }
 
+strong,
+b {
+    color: #000;
+}
+
 a {
     color: #535353;
     text-decoration: underline;
