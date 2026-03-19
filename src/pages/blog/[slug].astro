@@ -123,10 +123,10 @@ const publishedDate = blog.data.pubDate
   line-height: 1.6;
 }
 
-:global(.blog-content *:not(h1):not(h2):not(pre):not(code)) {
+:global(.blog-content *:not(h1):not(h2):not(h3):not(pre):not(code):not(h4)) {
   font-family: 'Palatino Linotype Custom';
-  font-weight: 500;
-  font-size: 13pt;
+  font-weight: 400;
+  font-size: 14pt;
 }
 
 .pub-date {
@@ -149,9 +149,17 @@ const publishedDate = blog.data.pubDate
 :global(.blog-content h2),
 :global(.blog-content h3) {
   margin-top: 1.5rem;
+  font-weight: 700;
   margin-bottom: 0.8rem;
+  font-family: 'Palatino Linotype Custom';
 }
-
+:global(.blog-content h4) {
+  margin-top: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.8rem;
+  font-size: 14pt;
+  font-family: 'Palatino Linotype Custom';
+}
 :global(.blog-content p) {
   margin-bottom: 1rem;
 }
