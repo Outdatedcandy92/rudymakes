@@ -18,12 +18,12 @@ Some cool stuff that I've done are:
 I'm current working on:
 - [Allwinner V3s Based SBC](https://github.com/Outdatedcandy92/V3S-SBC)
 - [Audio Development Board](https://github.com/Outdatedcandy92/Audio-Devboard)
-- [RP2040 Debug Probe](https://github.com/Outdatedcandy92/RP2040-DBUG-Probe)
 - [Writing Hardware Guides](https://github.com/Outdatedcandy92/Resolution-Hardware-Guides)
 - Organizing another hackathon!
 
 I just finished making:
 - [USB Hub Guide](https://github.com/Outdatedcandy92/USB-Hub-Guide)
+- [RP2040 Debug Probe](https://github.com/Outdatedcandy92/RP2040-DBUG-Probe)
 
 
 
